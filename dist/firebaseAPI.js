@@ -481,10 +481,20 @@ var FirebaseAPI = new function () {
   var _this = this;
 
   var authListener = null;
+  var loadingWindowListener = null;
+  var changeWindowListener = null;
   var messageListener = [];
 
   function setOnAuthStateChanged(callback) {
     authListener = callback;
+  }
+
+  function setOnLoadingWindowChanged(callback) {
+    loadingWindowListener = callback;
+  }
+
+  function setOnChangeWindowChanged(callback) {
+    changeWindowListener = callback;
   }
 
   function setOnMessageListener(type, callback) {
@@ -511,45 +521,54 @@ var FirebaseAPI = new function () {
               return _context13.abrupt("return");
 
             case 4:
-              _context13.next = 6;
+
+              if (!_.isNil(loadingWindowListener)) {
+                loadingWindowListener();
+              }
+
+              _context13.next = 7;
               return FirebaseDB.readUser(user.uid);
 
-            case 6:
+            case 7:
               u = _context13.sent;
 
               if (!_.isNil(u)) {
-                _context13.next = 15;
+                _context13.next = 16;
                 break;
               }
 
-              _context13.next = 10;
+              _context13.next = 11;
               return FirebaseDB.createUser(user);
 
-            case 10:
-              _context13.next = 12;
+            case 11:
+              _context13.next = 13;
               return FirebaseDB.readUser(user.uid);
 
-            case 12:
+            case 13:
               u = _context13.sent;
-              _context13.next = 20;
+              _context13.next = 21;
               break;
 
-            case 15:
-              _context13.next = 17;
+            case 16:
+              _context13.next = 18;
               return FirebaseDB.updateUser(user);
 
-            case 17:
-              _context13.next = 19;
+            case 18:
+              _context13.next = 20;
               return FirebaseDB.readUser(user.uid);
 
-            case 19:
+            case 20:
               u = _context13.sent;
 
-            case 20:
+            case 21:
 
               if (!_.isNil(authListener)) authListener(u);
 
-            case 21:
+              if (!_.isNil(changeWindowListener)) {
+                changeWindowListener();
+              }
+
+            case 23:
             case "end":
               return _context13.stop();
           }
@@ -615,7 +634,9 @@ var FirebaseAPI = new function () {
 
       return signOut;
     }(),
-    setOnAuthStateChanged: setOnAuthStateChanged
+    setOnAuthStateChanged: setOnAuthStateChanged,
+    setOnLoadingWindowChanged: setOnLoadingWindowChanged,
+    setOnChangeWindowChanged: setOnChangeWindowChanged
 
   };
 }();

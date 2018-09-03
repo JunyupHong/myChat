@@ -12,14 +12,9 @@ var myChatUIManager = new function () {
     textEle.css('height', textEleHeight);
   }
 
-  var $headerImage = $('.header-image');
-  $headerImage.on('click', function () {
-    FirebaseAPI.signIn();
-  });
-
   var $logoutButton = $('.i.fas.fa-angle-down');
   $logoutButton.on('click', function () {
     FirebaseAPI.signOut();
-    alert('logout');
+    window.location.replace('/myChatLogin');
   });
 }();

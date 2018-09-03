@@ -12,15 +12,10 @@ const myChatUIManager = new function() {
 
 
 
-  const $headerImage = $('.header-image');
-  $headerImage.on('click', () => {
-    FirebaseAPI.signIn();
-  });
-
   const $logoutButton = $('.i.fas.fa-angle-down');
   $logoutButton.on('click', () => {
     FirebaseAPI.signOut();
-    alert('logout');
+    window.location.replace('/myChatLogin');
   });
 
 

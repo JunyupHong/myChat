@@ -192,10 +192,20 @@ const FirebaseDB = {
  */
 const FirebaseAPI = new function () {
   let authListener = null;
+  let loadingWindowListener = null;
+  let changeWindowListener = null;
   let messageListener = [];
 
   function setOnAuthStateChanged(callback) {
     authListener = callback;
+  }
+
+  function setOnLoadingWindowChanged(callback) {
+    loadingWindowListener = callback;
+  }
+
+  function setOnChangeWindowChanged(callback) {
+    changeWindowListener = callback;
   }
 
   function setOnMessageListener(type, callback) {
@@ -210,6 +220,10 @@ const FirebaseAPI = new function () {
       return;
     }
 
+    if(!_.isNil(loadingWindowListener)) {
+      loadingWindowListener();
+    }
+
     let u = await FirebaseDB.readUser(user.uid); // 로그인된 유저 정보를 읽어옴
     if (_.isNil(u)) { // 처음 로그인할때
       await FirebaseDB.createUser(user);
@@ -222,6 +236,10 @@ const FirebaseAPI = new function () {
 
     if (!_.isNil(authListener)) authListener(u);
 
+    if(!_.isNil(changeWindowListener)) {
+      changeWindowListener();
+    }
+
   });
 
 
@@ -229,6 +247,8 @@ const FirebaseAPI = new function () {
     signIn: async () => await auth.signInWithPopup(provider),
     signOut: async () => await auth.signOut(),
     setOnAuthStateChanged,
+    setOnLoadingWindowChanged,
+    setOnChangeWindowChanged,
 
   };
 };
