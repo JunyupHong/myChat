@@ -1,13 +1,16 @@
 const $loginButton = $('.login-button');
-
-$loginButton.on('click', () => {
+const $loadingWindow = $('.loading-window');
+$loginButton.on('click', async () => {
   FirebaseAPI.setOnLoadingWindowChanged(() => {
-    $('.loading-window').css('display', 'block');
+    // $loadingWindow.removeClass('display-none');
+    // $loadingWindow.addClass('display-block');
+    $loadingWindow.css('display', 'block');
+
   });
-  FirebaseAPI.setOnChangeWindowChanged(() => {
-    window.location.replace('/myChat');
+  FirebaseAPI.setOnChangeWindowChanged(async () => {
+    await window.location.replace('/myChat');
   });
 
-  FirebaseAPI.signIn();
+  await FirebaseAPI.signIn();
 
 });

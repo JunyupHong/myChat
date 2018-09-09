@@ -4,23 +4,27 @@ const store = firebase.firestore();
 const storage = firebase.storage();
 const storageRef = firebase.storage().ref();
 
+
+/**
+ * 창이 바뀌어도 로그인 유지!
+ */
 firebase.auth().setPersistence(firebase.auth.Auth.Persistence.SESSION)
-    .then(function () {
-      // Existing and future Auth states are now persisted in the current
-      // session only. Closing the window would clear any existing state even
-      // if a user forgets to sign out.
-      // ...
-      // New sign-in will be persisted with session persistence.
-      return firebase.auth().signInWithEmailAndPassword(email, password);
-    })
-    .catch(function (error) {
-      // Handle Errors here.
-      var errorCode = error.code;
-      var errorMessage = error.message;
-    });
+  .then(function () {
+    // Existing and future Auth states are now persisted in the current
+    // session only. Closing the window would clear any existing state even
+    // if a user forgets to sign out.
+    // ...
+    // New sign-in will be persisted with session persistence.
+    return firebase.auth().signInWithEmailAndPassword(email, password);
+  })
+  .catch(function (error) {
+    // Handle Errors here.
+    var errorCode = error.code;
+    var errorMessage = error.message;
+  });
 
 
-const settings = {timestampsInSnapshots: true};
+const settings = { timestampsInSnapshots: true };
 store.settings(settings);
 
 
@@ -39,9 +43,12 @@ store.settings(settings);
 
 const FirebaseDB = {
   createUser: async (user) => {
+    let initial = '';
+    _.forEach(user.displayName.split(' '), u => initial += u[0]);
     const data = {
       uid: user.uid,
       displayName: user.displayName,
+      initial: initial,
       email: user.email,
       photoURL: user.photoURL,
       createdAt: new Date().getTime(),
@@ -50,48 +57,33 @@ const FirebaseDB = {
     return await store.collection('users').doc(user.uid).set(data);
   },
 
+
   updateUser: async (user) => {
+    let initial = '';
+    _.forEach(user.displayName.split(' '), u => initial += u[0]);
     const data = {
       displayName: user.displayName,
+      initial: initial,
       email: user.email,
       photoURL: user.photoURL,
       signAt: new Date().getTime(),
-
     };
-
-    return await store.collection("users").doc(user.uid).update(data);
-
+    return await store.collection('users').doc(user.uid).update(data);
   },
 
-  readUser: async (uid) => {
-    const refUser = store.collection("users").doc(uid);
+  getUser: async (uid) => {
+    const userRef = await store.collection('users').doc(uid);
 
-    const doc = await refUser.get();
+    const doc = await userRef.get();
     if (doc.exists) return doc.data();
     else return null;
   },
 
-  getUser: async (uid) => {
-    const docRef = store.collection("users").doc(uid);
-    let user = null;
-    await docRef.get().then(function (doc) {
-      if (doc.exists) {
-        console.log("Document data:", doc.data());
-        user = doc.data();
-      } else {
-        // doc.data() will be undefined in this case
-        console.log("No such document!");
-      }
-    }).catch(function (error) {
-      console.log("Error getting document:", error);
-    });
-    return user;
-  },
 
   getUsers: async () => {
 
     const userList = [];
-    await store.collection("users").get().then(function (querySnapshot) {
+    await store.collection('users').get().then(function (querySnapshot) {
       querySnapshot.forEach(function (doc) {
         // doc.data() is never undefined for query doc snapshots
         userList.push(doc.data());
@@ -102,89 +94,88 @@ const FirebaseDB = {
     return userList;
   },
 
-  setGradeToUser: async function (uid, grade) {
-    if (_.isNil(await this.getUser(uid))) {
-      await store.collection("users").doc(uid).update({
-        "grade": grade,
-      }).then(function () {
-        console.log("Document successfully updated!");
-      });
-    }
-  },
-  setChannelsToUser: async function (uid, channels) {
-    if (_.isNil(await this.getUser(uid))) {
-      await store.collection("users").doc(uid).update({
-        "channels": channels,
-      }).then(function () {
-        console.log("Document successfully updated!");
-      });
-    }
-  },
 
   putMessage: async (channel, user, message) => {
     const data = {
       date: new Date().getTime(),
-      messsage: message,
+      message: message,
       uid: user.uid,
       grade: user.grade,
       displayName: user.displayName
     };
-    return await store.collection(channel).doc(data.date + "").set(data);
+    return await store.collection('chatting').doc(channel).collection('messages').doc(data.date + '').set(data);
   },
 
   getMessage: async (channel, date) => {
     let message = null;
-    await store.collection(channel).doc(date).get().then(function (doc) {
+    await store.collection('chatting').doc(channel).collection('messages').doc(date + '').get().then(function (doc) {
       if (doc.exists) {
-        console.log("Document data:", doc.data());
+        console.log('Get message:', doc.data());
         message = doc.data();
       } else {
         // doc.data() will be undefined in this case
-        console.log("No such document!");
+        console.log('No such message!');
       }
+      return message;
     }).catch(function (error) {
-      console.log("Error getting document:", error);
+      console.log('Error getting message:', error);
     });
-    return message;
   },
+
   getMessages: async (channel) => {
     const chattingList = [];
-    await store.collection(channel).get().then(function (querySnapshot) {
+    await store.collection('chatting').doc(channel).collection('messages').get().then(function (querySnapshot) {
       querySnapshot.forEach(function (doc) {
         // doc.data() is never undefined for query doc snapshots
         chattingList.push(doc.data());
       });
-
+      console.log(chattingList);
+      return chattingList;
+    }).catch(function () {
+      console.log('getMessages Error');
     });
-
-    return chattingList;
   },
 
-  deleteMessage: async (channel, date) => {
 
-    await store.collection(channel).doc(date).delete().then(function () {
-      console.log("Document successfully deleted!");
+  setGrade: async function (uid, grades) {
+    if (!_.isNil(this.getUser(uid))) {
+      try {
+        await store.collection('users').doc(uid).update({ grade: grades });
+        console.log('Grade successfully updated at users!');
+        await store.collection('grade').doc(uid).set({ grade: grades });
+        console.log('Grade successfully updated at grade!');
+      } catch (e) {
+        console.log('setGrade error', e);
+      }
+    }
+    else console.log('There is no user to update grades');
+  },
+  setChannels: async function (uid, channels) {
+    if (!_.isNil(this.getUser(uid))) {
+      await store.collection('users').doc(uid).update({ channels: channels });
+      console.log('Channels successfully updated at users!');
+
+      await store.collection('channel').doc(uid).set({ channels: channels });
+      console.log('Channels successfully updated at channel!');
+
+    }
+    else console.log('There is no user to update channels');
+
+  },
+
+  deleteMessage: (channel, date) => {
+    store.collection('chatting').doc(channel).collection('messages').doc(date).delete().then(function () {
+      console.log('Message successfully deleted!');
     }).catch(function (error) {
-      console.error("Error removing document: ", error);
+      console.error('Error delete message: ', error);
     });
-  },
-
-  uploadFileInfo: async (user, channel, file) => {
-
-    const fileId = new Date().getTime().toString();
-
-    const data = {
-      uid: user.uid,
-      name: file.name,
-      size: file.size,
-      type: file.type,
-      lastModifiedDate: file.lastModifiedDate,
-      uploadDate: fileId
-    };
-
-    return await store.collection("files").doc(fileId).set(data);
   }
 };
+
+
+
+
+
 
 
 /**
@@ -194,7 +185,7 @@ const FirebaseAPI = new function () {
   let authListener = null;
   let loadingWindowListener = null;
   let changeWindowListener = null;
-  let messageListener = [];
+  let messageAddListener = null;
 
   function setOnAuthStateChanged(callback) {
     authListener = callback;
@@ -208,9 +199,31 @@ const FirebaseAPI = new function () {
     changeWindowListener = callback;
   }
 
-  function setOnMessageListener(type, callback) {
-    messageListener[type] = callback;
+  function setOnMessageAddListenerChanged(callback) {
+    messageAddListener = callback;
   }
+
+  function setObserver(channel) {
+    store.collection('chatting').doc(channel).collection('messages')
+      .onSnapshot(function (snapshot) {
+        snapshot.docChanges().forEach(function (change) {
+          if (change.type === 'added') {
+            if(!_.isNil(messageAddListener)) {
+              console.log('New message: ', change.doc.data());
+              messageAddListener(change.doc.data());
+            }
+          }
+          if (change.type === 'modified') {
+            console.log('Modified message: ', change.doc.data());
+          }
+          if (change.type === 'removed') {
+            console.log('Removed message: ', change.doc.data());
+          }
+        });
+      });
+  }
+
+
 
   // firebase 내장 메소드(접속했을때, user가 변할때 불린다)
   auth.onAuthStateChanged(async (user) => {
@@ -220,27 +233,32 @@ const FirebaseAPI = new function () {
       return;
     }
 
-    if(!_.isNil(loadingWindowListener)) {
+    if (!_.isNil(loadingWindowListener)) {
       loadingWindowListener();
     }
 
-    let u = await FirebaseDB.readUser(user.uid); // 로그인된 유저 정보를 읽어옴
+    let u = await FirebaseDB.getUser(user.uid); // 로그인된 유저 정보를 읽어옴
     if (_.isNil(u)) { // 처음 로그인할때
       await FirebaseDB.createUser(user);
-      u = await FirebaseDB.readUser(user.uid);
+      u = await FirebaseDB.getUser(user.uid);
     }
     else { // 재로그인
       await FirebaseDB.updateUser(user);
-      u = await FirebaseDB.readUser(user.uid);
+      u = await FirebaseDB.getUser(user.uid);
     }
 
     if (!_.isNil(authListener)) authListener(u);
 
-    if(!_.isNil(changeWindowListener)) {
+    if (!_.isNil(changeWindowListener)) {
       changeWindowListener();
     }
 
   });
+
+
+
+
+
 
 
   return {
@@ -249,6 +267,12 @@ const FirebaseAPI = new function () {
     setOnAuthStateChanged,
     setOnLoadingWindowChanged,
     setOnChangeWindowChanged,
+    setObserver,
+    setOnMessageAddListenerChanged,
 
   };
+};
+
+
+const test = async () => {
 };

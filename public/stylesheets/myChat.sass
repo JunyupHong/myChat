@@ -8,8 +8,10 @@ body
   margin: 0
 .display-none
   display: none !important
+.display-block
+  display: block !important
 .chat-wrapper
-  width: 100%
+  width: 100vw
   height: 100vh
   display: flex
   .empty-bar
@@ -189,6 +191,15 @@ body
         display: flex
         padding: 8px 16px 0 16px
         position: relative
+        &:hover
+          cursor: pointer
+          .chat-image-zone
+            .i.fas.fa-cog
+              display: block
+          .chat
+            .chat-profile-content
+              .i.fas.fa-cog
+                display: block
         .chat-image-zone
           width: 40px
           .chat-image
@@ -197,11 +208,12 @@ body
             border-radius: 5px
             line-height: 40px
             max-height: 40px
-            border: solid 1px
+            color: white
             &.orange
               background: $state-occupied
           .i.fas.fa-cog
             width: 100%
+            display: none
             color: $font-grey-third
             font-size: 12px
             text-align: end
@@ -237,6 +249,7 @@ body
               font-size: 12px
               line-height: 16px
               color: $font-grey-third
+              display: none
           .chat-text-content
             padding: 4px 8px 0 8px
             color: #555
@@ -300,3 +313,67 @@ body
       color: #444
       font-size: 12px
       text-align: center
+
+
+.loading-window
+  position: fixed
+  left: 0
+  top: 0
+  width: 100vw
+  height: 100vh
+  background: white
+  z-index: 3
+
+#loading
+  position: absolute
+  left: calc(50% - 100px)
+  top: calc(50% - 25px)
+  z-index: 9999
+
+.uil-ripple
+  position: absolute
+  left: calc(50% - 90px)
+  top: calc(50% - 90px)
+  opacity: .5
+  z-index: 999
+
+.ld-l
+  opacity: 0
+  animation: ld-in 3s 0.0s ease infinite
+
+.ld-o
+  opacity: 0
+  animation: ld-in 3s 0.1s ease infinite
+
+.ld-a
+  opacity: 0
+  animation: ld-in 3s 0.2s ease infinite
+
+.ld-d
+  opacity: 0
+  animation: ld-in 3s 0.3s ease infinite
+
+.ld-i
+  opacity: 0
+  animation: ld-in 3s 0.4s ease infinite
+
+.ld-n
+  opacity: 0
+  animation: ld-in 3s 0.5s ease infinite
+
+.ld-g
+  opacity: 0
+  animation: ld-in 3s 0.6s ease infinite
+
+@keyframes ld-in
+  0%
+    opacity: 0
+    transform: scale(0)
+
+  30%
+    opacity: 1
+    transform: scale(1)
+
+  100%
+    opacity: 1
+    transform: scale(1)
